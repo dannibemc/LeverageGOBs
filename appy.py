@@ -8,7 +8,9 @@ def local_css(file_name):
 
 # Lista para armazenar as obrigações
 obrigações = []
-obrigacao_selecionada = None  # Variável para armazenar a obrigação selecionada
+obrigacao_selecionada = None
+ordenar_por = None
+direcao_ordem = "asc"  # "asc" ou "desc"
 
 def dashboard():
     st.title("Dashboard")
@@ -37,7 +39,7 @@ def mapeamento():
                 "Resumo": resumo_obrigacao,
                 "Prazo": prazo,
                 "Periodicidade": tipo_periodicidade,
-                "Status": "Pendente"  # Status inicial
+                "Status": "Pendente"
             }
             obrigações.append(nova_obrigacao)
             st.success("Obrigação Cadastrada com Sucesso!")
@@ -46,10 +48,9 @@ def mapeamento():
     st.subheader("Obrigações Cadastradas")
     if obrigações:
         df_obrigações = pd.DataFrame(obrigações)
-        df_obrigações["Detalhes"] = [f"Ver Detalhes {i}" for i in range(len(df_obrigações))]  # Adiciona coluna de botões
+        df_obrigações["Detalhes"] = [f"Ver Detalhes {i}" for i in range(len(df_obrigações))]
         st.dataframe(df_obrigações, hide_index=True)
 
-        # Lógica para lidar com o clique na linha
         global obrigacao_selecionada
         for i, obrigacao in enumerate(obrigações):
             if st.button(f"Ver Detalhes {i}"):
@@ -60,7 +61,48 @@ def mapeamento():
 def controle():
     st.title("Controle de Obrigações")
 
-    global obrigacao_selecionada
+    global obrigacao_selecionada, ordenar_por, direcao_ordem
+
+    # Funcionalidade de Busca
+    termo_busca = st.text_input("Buscar Obrigações", "")
+
+    # Funcionalidade de Filtragem
+    status_selecionado = st.selectbox("Filtrar por Status", ["Todos", "Pendente", "Em Andamento", "Concluída", "Atrasada"])
+
+    # Aplica os filtros
+    obrigações_filtradas = []
+    for obrigacao in obrigações:
+        if termo_busca.lower() in " ".join(str(v) for v in obrigacao.values()).lower():
+            if status_selecionado == "Todos" or obrigacao["Status"] == status_selecionado:
+                obrigações_filtradas.append(obrigacao)
+
+    if obrigações_filtradas:
+        df_obrigações = pd.DataFrame(obrigações_filtradas)
+
+        # Funcionalidade de Ordenação
+        def ao_clicar_no_cabecalho(coluna):
+            global ordenar_por, direcao_ordem
+            if ordenar_por == coluna:
+                direcao_ordem = "desc" if direcao_ordem == "asc" else "asc"
+            else:
+                ordenar_por = coluna
+                direcao_ordem = "asc"
+
+        colunas_ordenaveis = ["Parte Devedora", "Documento", "Resumo", "Prazo", "Status"]
+        colunas = st.columns(len(colunas_ordenaveis))
+        for i, coluna in enumerate(colunas_ordenaveis):
+            with colunas[i]:
+                if st.button(coluna):
+                    ao_clicar_no_cabecalho(coluna)
+
+        if ordenar_por:
+            df_obrigações = df_obrigações.sort_values(by=ordenar_por, ascending=(direcao_ordem == "asc"))
+
+        st.dataframe(df_obrigações, hide_index=True)
+    else:
+        st.info("Nenhuma obrigação encontrada com os critérios selecionados.")
+
+    # Detalhes da Obrigação
     if obrigacao_selecionada:
         st.subheader("Detalhes da Obrigação")
         st.write(f"Parte Devedora: {obrigacao_selecionada['Parte Devedora']}")
@@ -70,15 +112,16 @@ def controle():
         st.write(f"Prazo: {obrigacao_selecionada['Prazo']}")
         st.write(f"Periodicidade: {obrigacao_selecionada['Periodicidade']}")
 
-        # Edição do Status
         novo_status = st.selectbox("Status", ["Pendente", "Em Andamento", "Concluída", "Atrasada"])
         if st.button("Salvar Status"):
-            obrigacao_selecionada["Status"] = novo_status
+            for obrigacao in obrigações:  # Localiza e atualiza na lista original
+                if obrigacao["Documento"] == obrigacao_selecionada["Documento"] and obrigacao["Resumo"] == obrigacao_selecionada["Resumo"]:
+                    obrigacao["Status"] = novo_status
+                    break
             st.success("Status Atualizado!")
-            obrigacao_selecionada = None  # Limpa a seleção após salvar
+            obrigacao_selecionada = None
     else:
         st.info("Selecione uma obrigação para ver os detalhes.")
-
 
 def cobranca():
     st.title("Cobrança")
