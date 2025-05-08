@@ -23,12 +23,17 @@ def mapeamento():
     with st.form("cadastro_obrigacao"):
         st.subheader("Cadastrar Nova Obrigação")
 
-        parte_devedora = st.text_input("Parte Devedora da Obrigação")
-        documento_operacao = st.text_input("Documento da Operação")
-        secao_clausula = st.text_input("Seção/Cláusula/Subcláusula/Item")
-        resumo_obrigacao = st.text_area("Resumo da Obrigação")
-        prazo = st.date_input("Prazo")
-        tipo_periodicidade = st.selectbox("Tipo de Periodicidade", ["Única", "Diária", "Semanal", "Mensal", "Anual"])
+        col1, col2 = st.columns(2)  # Layout em colunas
+
+        with col1:
+            parte_devedora = st.text_input("Parte Devedora da Obrigação")
+            documento_operacao = st.text_input("Documento da Operação")
+            secao_clausula = st.text_input("Seção/Cláusula/Subcláusula/Item")
+
+        with col2:
+            resumo_obrigacao = st.text_area("Resumo da Obrigação")
+            prazo = st.date_input("Prazo")
+            tipo_periodicidade = st.selectbox("Tipo de Periodicidade", ["Única", "Diária", "Semanal", "Mensal", "Anual"])
 
         submit_button = st.form_submit_button("Cadastrar")
 
@@ -231,7 +236,7 @@ def configuracoes():
     st.write("Gerenciamento de Usuários e Configurações Gerais")
 
 def main():
-    local_css("style.css")
+    local_css("style.css")  # Carrega o CSS personalizado
     st.sidebar.title("Navegação")
     menu = ["Dashboard", "Mapeamento de Obrigações", "Controle de Obrigações", "Cobrança", "Reporte", "Configurações"]
     choice = st.sidebar.selectbox("Selecione a página", menu)
