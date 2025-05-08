@@ -1,4 +1,9 @@
 import streamlit as st
+import base64  # Importe a biblioteca base64
+
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 def dashboard():
     st.title("Dashboard")
@@ -25,6 +30,7 @@ def configuracoes():
     st.write("Gerenciamento de Usuários e Configurações Gerais")
 
 def main():
+    local_css("style.css")  # Carrega o CSS
     st.sidebar.title("Navegação")
     menu = ["Dashboard", "Mapeamento de Obrigações", "Controle de Obrigações", "Cobrança", "Reporte", "Configurações"]
     choice = st.sidebar.selectbox("Selecione a página", menu)
