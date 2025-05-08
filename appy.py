@@ -140,22 +140,32 @@ regua_cobranca = {
     "Ação Judicial": {"dias": 2 + 7 + 15, "acao": "Ação Judicial"}
 }
 
+# Funções para calcular as datas de cobrança
+def calcular_data_cobranca(data_vencimento, dias):
+    return data_vencimento + timedelta(days=dias)
+
 def cobranca():
     st.title("Cobrança")
     st.header("Régua de Cobrança")
+
+    hoje = datetime.now().date()
 
     for etapa, detalhes in regua_cobranca.items():
         with st.expander(etapa):
             st.write(f"**{etapa}:** {detalhes['acao']}")
             st.write(f"**Dias após o vencimento:** {detalhes['dias']} dias")
 
-            # Exibe as obrigações neste estágio (simulado com o status)
-            obrigações_etapa = [
-                obrigacao for obrigacao in obrigações
-                if (obrigacao["Status"] == "Atrasada" and detalhes["dias"] > 0) or
-                   (obrigacao["Status"] == "Pendente" and detalhes["dias"] < 0) or
-                   (obrigacao["Status"] == "Em Andamento" and detalhes["dias"] == 2)
-            ]
+            obrigações_etapa = []
+            for obrigacao in obrigações:
+                data_vencimento = datetime.strptime(str(obrigacao["Prazo"]), '%Y-%m-%d').date()
+                data_cobranca = calcular_data_cobranca(data_vencimento, detalhes["dias"])
+                obrigacao["Data " + etapa] = data_cobranca  # Adiciona a data à obrigação
+
+                if (detalhes["dias"] < 0 and data_cobranca <= hoje) or \
+                   (detalhes["dias"] > 0 and data_cobranca <= hoje and obrigacao["Status"] == "Atrasada") or \
+                   (detalhes["dias"] == 2 and data_cobranca <= hoje and obrigacao["Status"] == "Em Andamento"):
+                    obrigações_etapa.append(obrigacao)
+
             if obrigações_etapa:
                 df_etapa = pd.DataFrame(obrigações_etapa)
                 st.dataframe(df_etapa, hide_index=True)
