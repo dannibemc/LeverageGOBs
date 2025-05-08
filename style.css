@@ -1,57 +1,17 @@
-/* Cores da Leverage */
-:root {
-    --roxo-leverage: #800080; /* Um tom de roxo (ajuste conforme necessário) */
-    --azul-leverage: #0000FF; /* Um tom de azul (ajuste conforme necessário) */
-    --ciano-leverage: #00FFFF; /* Ciano */
-    --cinza-claro: #F0F0F0;
-    --cinza-medio: #D3D3D3;
-    --cinza-escuro: #A9A9A9;
+.stButton>button {
+    background-color: #4CAF50; /* Cor de fundo */
+    border: none; /* Remove a borda */
+    color: white; /* Cor do texto */
+    padding: 10px 20px; /* Espaçamento interno */
+    text-align: center; /* Alinhamento do texto */
+    text-decoration: none; /* Remove sublinhado */
+    display: inline-block; /* Exibe como bloco */
+    font-size: 16px; /* Tamanho da fonte */
+    margin: 4px 2px; /* Margens externas */
+    cursor: pointer; /* Cursor ao passar o mouse */
+    border-radius: 5px; /* Borda arredondada */
 }
 
-body {
-    background-color: var(--cinza-claro);
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
+.stButton>button:hover {
+    background-color: #3e8e41; /* Cor de fundo ao passar o mouse */
 }
-
-.sidebar-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.main-content {
-    padding: 20px;
-}
-
-.st-header {
-    background-color: white;
-    padding: 10px;
-    border-bottom: 1px solid var(--cinza-medio);
-}
-
-.st-title {
-    color: var(--roxo-leverage);
-}
-
-.st-selectbox label {
-    color: var(--azul-leverage);
-}
-
-.st-button {
-    background-color: var(--roxo-leverage);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    cursor: pointer;
-}
-
-.st-button:hover {
-    background-color: var(--ciano-leverage);
-    color: black;
-}
-
-/* Adicione mais estilos conforme necessário */
