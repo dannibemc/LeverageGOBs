@@ -172,10 +172,59 @@ def cobranca():
             else:
                 st.info(f"Nenhuma obrigação nesta etapa.")
 
+# Funções para gerar relatórios
+def gerar_relatorio_por_devedor(devedor):
+    relatorio = [obrigacao for obrigacao in obrigações if obrigacao["Parte Devedora"] == devedor]
+    return pd.DataFrame(relatorio)
+
+def gerar_relatorio_por_status(status):
+    relatorio = [obrigacao for obrigacao in obrigações if obrigacao["Status"] == status]
+    return pd.DataFrame(relatorio)
+
+def gerar_relatorio_por_periodo(data_inicio, data_fim):
+    relatorio = [obrigacao for obrigacao in obrigações if data_inicio <= datetime.strptime(str(obrigacao["Prazo"]), '%Y-%m-%d').date() <= data_fim]
+    return pd.DataFrame(relatorio)
 
 def reporte():
     st.title("Reporte")
-    st.write("Relatórios e Dashboards")
+    st.header("Gerar Relatórios")
+
+    tipo_relatorio = st.selectbox("Selecione o tipo de relatório", ["Por Devedor", "Por Status", "Por Período"])
+
+    if tipo_relatorio == "Por Devedor":
+        devedor = st.text_input("Devedor")
+        if st.button("Gerar Relatório"):
+            relatorio = gerar_relatorio_por_devedor(devedor)
+            st.dataframe(relatorio)
+            if not relatorio.empty:
+                nome_arquivo = f"relatorio_devedor_{devedor}.csv"
+                st.download_button(label="Baixar CSV", data=relatorio.to_csv(index=False).encode('utf-8'), file_name=nome_arquivo, mime='text/csv')
+            else:
+                st.info("Nenhuma obrigação encontrada para este devedor.")
+
+    elif tipo_relatorio == "Por Status":
+        status = st.selectbox("Status", ["Pendente", "Em Andamento", "Concluída", "Atrasada"])
+        if st.button("Gerar Relatório"):
+            relatorio = gerar_relatorio_por_status(status)
+            st.dataframe(relatorio)
+            if not relatorio.empty:
+                nome_arquivo = f"relatorio_status_{status}.csv"
+                st.download_button(label="Baixar CSV", data=relatorio.to_csv(index=False).encode('utf-8'), file_name=nome_arquivo, mime='text/csv')
+            else:
+                st.info("Nenhuma obrigação encontrada com este status.")
+
+    elif tipo_relatorio == "Por Período":
+        data_inicio = st.date_input("Data de Início")
+        data_fim = st.date_input("Data de Fim")
+        if st.button("Gerar Relatório"):
+            relatorio = gerar_relatorio_por_periodo(data_inicio, data_fim)
+            st.dataframe(relatorio)
+            if not relatorio.empty:
+                nome_arquivo = f"relatorio_periodo_{data_inicio}_{data_fim}.csv"
+                st.download_button(label="Baixar CSV", data=relatorio.to_csv(index=False).encode('utf-8'), file_name=nome_arquivo, mime='text/csv')
+            else:
+                st.info("Nenhuma obrigação encontrada neste período.")
+
 
 def configuracoes():
     st.title("Configurações")
