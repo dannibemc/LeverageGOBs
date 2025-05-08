@@ -1,6 +1,7 @@
 import streamlit as st
 import base64
 import pandas as pd
+from datetime import datetime, timedelta  # Importe datetime e timedelta
 
 def local_css(file_name):
     with open(file_name) as f:
@@ -10,7 +11,7 @@ def local_css(file_name):
 obrigações = []
 obrigacao_selecionada = None
 ordenar_por = None
-direcao_ordem = "asc"  # "asc" ou "desc"
+direcao_ordem = "asc"
 
 def dashboard():
     st.title("Dashboard")
@@ -63,14 +64,11 @@ def controle():
 
     global obrigacao_selecionada, ordenar_por, direcao_ordem
 
-    # Funcionalidade de Busca
     termo_busca = st.text_input("Buscar Obrigações", "")
-
-    # Funcionalidade de Filtragem
     status_selecionado = st.selectbox("Filtrar por Status", ["Todos", "Pendente", "Em Andamento", "Concluída", "Atrasada"])
 
-    # Aplica os filtros
     obrigações_filtradas = []
+    hoje = datetime.now().date()
     for obrigacao in obrigações:
         if termo_busca.lower() in " ".join(str(v) for v in obrigacao.values()).lower():
             if status_selecionado == "Todos" or obrigacao["Status"] == status_selecionado:
@@ -79,7 +77,20 @@ def controle():
     if obrigações_filtradas:
         df_obrigações = pd.DataFrame(obrigações_filtradas)
 
-        # Funcionalidade de Ordenação
+        # Alertas Visuais
+        def aplicar_estilo(valor, coluna):
+            if coluna == "Prazo":
+                prazo = datetime.strptime(str(valor), '%Y-%m-%d').date()
+                if prazo < hoje:
+                    return 'color: red'  # Atrasado
+                elif (prazo - hoje).days <= 7:
+                    return 'color: orange'  # Próximo do vencimento
+            return ''
+
+        df_estilo = df_obrigações.style.applymap(aplicar_estilo)
+        st.dataframe(df_estilo, hide_index=True)
+
+        # Ordenação (mantido)
         def ao_clicar_no_cabecalho(coluna):
             global ordenar_por, direcao_ordem
             if ordenar_por == coluna:
@@ -97,12 +108,10 @@ def controle():
 
         if ordenar_por:
             df_obrigações = df_obrigações.sort_values(by=ordenar_por, ascending=(direcao_ordem == "asc"))
-
-        st.dataframe(df_obrigações, hide_index=True)
     else:
         st.info("Nenhuma obrigação encontrada com os critérios selecionados.")
 
-    # Detalhes da Obrigação
+    # Detalhes da Obrigação (mantido)
     if obrigacao_selecionada:
         st.subheader("Detalhes da Obrigação")
         st.write(f"Parte Devedora: {obrigacao_selecionada['Parte Devedora']}")
@@ -114,7 +123,7 @@ def controle():
 
         novo_status = st.selectbox("Status", ["Pendente", "Em Andamento", "Concluída", "Atrasada"])
         if st.button("Salvar Status"):
-            for obrigacao in obrigações:  # Localiza e atualiza na lista original
+            for obrigacao in obrigações:
                 if obrigacao["Documento"] == obrigacao_selecionada["Documento"] and obrigacao["Resumo"] == obrigacao_selecionada["Resumo"]:
                     obrigacao["Status"] = novo_status
                     break
