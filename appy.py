@@ -1,7 +1,7 @@
 import streamlit as st
 import base64
 import pandas as pd
-from datetime import datetime, timedelta  # Importe datetime e timedelta
+from datetime import datetime, timedelta
 
 def local_css(file_name):
     with open(file_name) as f:
@@ -82,15 +82,15 @@ def controle():
             if coluna == "Prazo":
                 prazo = datetime.strptime(str(valor), '%Y-%m-%d').date()
                 if prazo < hoje:
-                    return 'color: red'  # Atrasado
+                    return 'color: red'
                 elif (prazo - hoje).days <= 7:
-                    return 'color: orange'  # Próximo do vencimento
+                    return 'color: orange'
             return ''
 
         df_estilo = df_obrigações.style.applymap(aplicar_estilo)
         st.dataframe(df_estilo, hide_index=True)
 
-        # Ordenação (mantido)
+        # Ordenação
         def ao_clicar_no_cabecalho(coluna):
             global ordenar_por, direcao_ordem
             if ordenar_por == coluna:
@@ -111,7 +111,7 @@ def controle():
     else:
         st.info("Nenhuma obrigação encontrada com os critérios selecionados.")
 
-    # Detalhes da Obrigação (mantido)
+    # Detalhes da Obrigação
     if obrigacao_selecionada:
         st.subheader("Detalhes da Obrigação")
         st.write(f"Parte Devedora: {obrigacao_selecionada['Parte Devedora']}")
@@ -132,9 +132,36 @@ def controle():
     else:
         st.info("Selecione uma obrigação para ver os detalhes.")
 
+# Régua de Cobrança
+regua_cobranca = {
+    "Lembrete": {"dias": -30, "acao": "Enviar Lembrete"},
+    "Primeira Cobrança": {"dias": 2, "acao": "Cobrança por E-mail + Reporte"},
+    "Notificação Jurídica": {"dias": 2 + 7, "acao": "Notificação Jurídica"},
+    "Ação Judicial": {"dias": 2 + 7 + 15, "acao": "Ação Judicial"}
+}
+
 def cobranca():
     st.title("Cobrança")
-    st.write("Régua de Cobrança")
+    st.header("Régua de Cobrança")
+
+    for etapa, detalhes in regua_cobranca.items():
+        with st.expander(etapa):
+            st.write(f"**{etapa}:** {detalhes['acao']}")
+            st.write(f"**Dias após o vencimento:** {detalhes['dias']} dias")
+
+            # Exibe as obrigações neste estágio (simulado com o status)
+            obrigações_etapa = [
+                obrigacao for obrigacao in obrigações
+                if (obrigacao["Status"] == "Atrasada" and detalhes["dias"] > 0) or
+                   (obrigacao["Status"] == "Pendente" and detalhes["dias"] < 0) or
+                   (obrigacao["Status"] == "Em Andamento" and detalhes["dias"] == 2)
+            ]
+            if obrigações_etapa:
+                df_etapa = pd.DataFrame(obrigações_etapa)
+                st.dataframe(df_etapa, hide_index=True)
+            else:
+                st.info(f"Nenhuma obrigação nesta etapa.")
+
 
 def reporte():
     st.title("Reporte")
