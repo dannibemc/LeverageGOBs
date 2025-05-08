@@ -2,6 +2,7 @@ import streamlit as st
 import base64
 import pandas as pd
 from datetime import datetime, timedelta
+import time  # Importa a biblioteca time
 
 def local_css(file_name):
     with open(file_name) as f:
@@ -199,7 +200,9 @@ def reporte():
     if tipo_relatorio == "Por Devedor":
         devedor = st.text_input("Devedor")
         if st.button("Gerar Relatório"):
-            relatorio = gerar_relatorio_por_devedor(devedor)
+            with st.spinner("Gerando Relatório..."): # Adiciona o spinner
+                time.sleep(1) # Simula o tempo de geração
+                relatorio = gerar_relatorio_por_devedor(devedor)
             st.dataframe(relatorio)
             if not relatorio.empty:
                 nome_arquivo = f"relatorio_devedor_{devedor}.csv"
@@ -210,7 +213,9 @@ def reporte():
     elif tipo_relatorio == "Por Status":
         status = st.selectbox("Status", ["Pendente", "Em Andamento", "Concluída", "Atrasada"])
         if st.button("Gerar Relatório"):
-            relatorio = gerar_relatorio_por_status(status)
+            with st.spinner("Gerando Relatório..."): # Adiciona o spinner
+                time.sleep(1) # Simula o tempo de geração
+                relatorio = gerar_relatorio_por_status(status)
             st.dataframe(relatorio)
             if not relatorio.empty:
                 nome_arquivo = f"relatorio_status_{status}.csv"
@@ -222,7 +227,9 @@ def reporte():
         data_inicio = st.date_input("Data de Início")
         data_fim = st.date_input("Data de Fim")
         if st.button("Gerar Relatório"):
-            relatorio = gerar_relatorio_por_periodo(data_inicio, data_fim)
+            with st.spinner("Gerando Relatório..."): # Adiciona o spinner
+                time.sleep(1) # Simula o tempo de geração
+                relatorio = gerar_relatorio_por_periodo(data_inicio, data_fim)
             st.dataframe(relatorio)
             if not relatorio.empty:
                 nome_arquivo = f"relatorio_periodo_{data_inicio}_{data_fim}.csv"
