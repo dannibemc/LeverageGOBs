@@ -1,0 +1,101 @@
+import streamlit as st
+import pandas as pd
+import datetime
+import sqlite3
+from io import BytesIO
+from docx import Document
+from fpdf import FPDF
+import matplotlib.pyplot as plt
+import seaborn as sns
+import time
+
+DB_USUARIOS = "/mnt/data/usuarios_logs.db"
+
+# Inicializar banco de dados de usuários e logs
+conn = sqlite3.connect(DB_USUARIOS)
+c = conn.cursor()
+c.execute("""
+CREATE TABLE IF NOT EXISTS usuarios (
+    username TEXT PRIMARY KEY,
+    password TEXT
+)
+""")
+c.execute("""
+CREATE TABLE IF NOT EXISTS logs (
+    usuario TEXT,
+    acao TEXT,
+    timestamp TEXT
+)
+""")
+conn.commit()
+
+# Carga inicial dos usuários
+c.execute("SELECT username, password FROM usuarios")
+usuarios_db = dict(c.fetchall())
+if not usuarios_db:
+    c.executemany("INSERT INTO usuarios (username, password) VALUES (?, ?)", [
+        ("admin", "1234"),
+        ("gestor", "gestao2024"),
+        ("juridico", "legal2024")
+    ])
+    conn.commit()
+    c.execute("SELECT username, password FROM usuarios")
+    usuarios_db = dict(c.fetchall())
+conn.close()
+
+st.sidebar.markdown("## 🔐 Login de Usuário")
+username = st.sidebar.text_input("Usuário")
+password = st.sidebar.text_input("Senha", type="password")
+authenticated = username in usuarios_db and password == usuarios_db[username]
+
+if not authenticated:
+    st.warning("🔒 Acesso restrito. Informe usuário e senha.")
+    st.stop()
+
+st.success(f"✅ Bem-vindo(a), {username}!")
+
+# Função para registrar log
+def registrar_log(usuario, acao):
+    conn = sqlite3.connect(DB_USUARIOS)
+    conn.execute("INSERT INTO logs (usuario, acao, timestamp) VALUES (?, ?, ?)", (usuario, acao, time.strftime("%Y-%m-%d %H:%M:%S")))
+    conn.commit()
+    conn.close()
+
+# Área administrativa
+if username == "admin":
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🛠 Administração")
+    if st.sidebar.checkbox("Visualizar usuários e logs"):
+        conn = sqlite3.connect(DB_USUARIOS)
+        df_usuarios = pd.read_sql("SELECT * FROM usuarios", conn)
+        df_logs = pd.read_sql("SELECT * FROM logs ORDER BY timestamp DESC", conn)
+        conn.close()
+
+        st.markdown("### 👥 Usuários Cadastrados")
+        st.dataframe(df_usuarios)
+
+        st.markdown("### ➕ Gerenciar Usuários")
+        novo_user = st.text_input("Novo usuário")
+        nova_senha = st.text_input("Senha para novo usuário", type="password")
+        if st.button("Cadastrar Usuário") and novo_user and nova_senha:
+            conn = sqlite3.connect(DB_USUARIOS)
+            try:
+                conn.execute("INSERT INTO usuarios (username, password) VALUES (?, ?)", (novo_user, nova_senha))
+                conn.commit()
+                st.success(f"Usuário '{novo_user}' cadastrado.")
+                registrar_log(username, f"Cadastro de usuário: {novo_user}")
+            except sqlite3.IntegrityError:
+                st.warning("Usuário já existe.")
+            conn.close()
+
+        conn = sqlite3.connect(DB_USUARIOS)
+        excluir_user = st.selectbox("Selecionar usuário para remover", [u for u in usuarios_db if u != "admin"])
+        if st.button("Remover Usuário"):
+            conn.execute("DELETE FROM usuarios WHERE username = ?", (excluir_user,))
+            conn.commit()
+            st.success(f"Usuário '{excluir_user}' removido.")
+            registrar_log(username, f"Remoção de usuário: {excluir_user}")
+        conn.close()
+
+        st.markdown("### 🕓 Logs de Relatórios e Ações")
+        st.dataframe(df_logs)
